@@ -60,6 +60,13 @@ int main(int argc, char **argv) {
     uint8_t custom[MAC_CUSTOM_LENGTH];
     random_buffer(urandom, custom, sizeof(custom));
 
+    char mac_address[3 * (MAC_OUI_LENGTH + MAC_CUSTOM_LENGTH)];
+    snprintf(mac_address, sizeof(mac_address), "%02x:%02x:%02x:%02x:%02x:%02x",
+	    vendor[0], vendor[1], vendor[2],
+	    custom[0], custom[1], custom[2]);
+
+    ALOGI("Generated MAC address: %s", mac_address);
+
     FILE *output = fopen(WCNSS_MAC_ADDRESS_FILE, "w");
     if (output == NULL) {
 	/* There's nothing we can do about it, the MAC address will probably be leaked */
@@ -67,15 +74,20 @@ int main(int argc, char **argv) {
 	return 1;
     }
 
-    char mac_address[3 * (MAC_OUI_LENGTH + MAC_CUSTOM_LENGTH)];
-    snprintf(mac_address, sizeof(mac_address), "%02x:%02x:%02x:%02x:%02x:%02x",
-	    vendor[0], vendor[1], vendor[2],
-	    custom[0], custom[1], custom[2]);
+    if (fputs(mac_address, output) < 0) {
+	ALOGE("Could not write to output file: %d", errno);
 
-    fputs(mac_address, output);
-    fclose(output);
+	if (fclose(output) != 0) {
+	    ALOGE("Could not close output file: %d", errno);
+	}
 
-    ALOGI("Written MAC address: %s", mac_address);
+	return 1;
+    }
+
+    if (fclose(output) != 0) {
+	ALOGE("Could not close output file: %d", errno);
+	return 1;
+    }
 
     return 0;
 }
