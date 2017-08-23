@@ -10,6 +10,16 @@ MAC address randomizer for the Qualcomm WCNSS Platform Driver.
  * Android 7.0 or above for [`/system/etc/init` support][2]
  * Custom ROM with `/system/addon.d` support for OTA survival
 
+## Working Devices
+
+Please open an issue or a pull request for your device if it works, or doesn't!
+
+### MSM8916
+
+Use `install-msm8916.sh` for these devices:
+
+ * Moto G Play (`harpia`) with LineageOS 14.1
+
 ## Installation
 
 In order to use the installation script, ADB must be running as root and
@@ -49,14 +59,6 @@ If it is not working, you can check `logcat` for errors:
 ```
 adb logcat -s changemac
 ```
-
-## Working Devices
-
-Please open an issue or a pull request for your device if it works, or doesn't!
-
-### MSM8916
-
- * Moto G Play (`harpia`) with LineageOS 14.1
 
 [1]: https://developer.android.com/ndk/downloads/index.html
 [2]: https://android.googlesource.com/platform/system/core/+/b8dd0272e5decb066152e9dc99bcb41e60264a99
