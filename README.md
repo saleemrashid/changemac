@@ -48,16 +48,8 @@ After installation, reboot the device to load the init script.
 To check that it is working:
 
 ```
+adb logcat -d -s changemac
 adb shell cat /sys/class/net/wlan0/address
-adb shell svc wifi disable
-adb shell svc wifi enable
-adb shell cat /sys/class/net/wlan0/address
-```
-
-If it is not working, you can check `logcat` for errors:
-
-```
-adb logcat -s changemac
 ```
 
 [1]: https://developer.android.com/ndk/downloads/index.html
