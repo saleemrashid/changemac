@@ -1,3 +1,6 @@
+on init
+    exec -- /system/xbin/changemac
+
 on property:wlan.driver.status=*
     setprop net.hostname ""
     exec -- /system/xbin/changemac
