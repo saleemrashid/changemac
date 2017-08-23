@@ -45,6 +45,7 @@ static const uint8_t VENDORS[][MAC_OUI_LENGTH] = {
 #define VENDORS_COUNT (sizeof(VENDORS) / sizeof(*VENDORS))
 
 static bool random_buffer(FILE *stream, void *buffer, size_t size);
+static bool random_uniform(FILE *stream, uintmax_t n, uintmax_t *out);
 static const uint8_t *random_vendor(FILE *stream);
 
 int main(int argc, char **argv) {
@@ -96,8 +97,8 @@ bool random_buffer(FILE *stream, void *buffer, size_t size) {
     return (fread(buffer, 1, size, stream) == size);
 }
 
-bool random_uniform(FILE *stream, size_t n, size_t *out) {
-    size_t x, max = SIZE_MAX - (SIZE_MAX % n);
+bool random_uniform(FILE *stream, uintmax_t n, uintmax_t *out) {
+    uintmax_t x, max = UINTMAX_MAX - (UINTMAX_MAX % n);
 
     do {
 	if (!random_buffer(stream, &x, sizeof(x))) {
@@ -110,13 +111,13 @@ bool random_uniform(FILE *stream, size_t n, size_t *out) {
 }
 
 const uint8_t *random_vendor(FILE *stream) {
-    size_t x = 0;
+    uintmax_t x = 0;
 
     if (!random_uniform(stream, VENDORS_COUNT, &x)) {
 	/* Ignore the error to avoid leaking the MAC address */
 	ALOGE("Could not read random bytes from stream: %d", errno);;
     }
 
-    ALOGI("Selected vendor index: %zu\n", x);
+    ALOGI("Selected vendor index: %ju\n", x);
     return VENDORS[x];
 }
