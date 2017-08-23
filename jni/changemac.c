@@ -9,8 +9,21 @@
 #define ALOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
 #define ALOGI(...) __android_log_print(ANDROID_LOG_INFO,  LOG_TAG, __VA_ARGS__)
 
-/* This is device-dependent, the path is generated from the device tree */
-#define WCNSS_MAC_ADDRESS_FILE "/sys/bus/platform/devices/a000000.qcom,wcnss-wlan/wcnss_mac_addr"
+/* https://android.googlesource.com/kernel/msm/+/android-8.0.0_r0.4/Documentation/devicetree/bindings/wcnss/wcnss-wlan.txt#65 */
+#ifndef WCNSS_DEVICE_ADDRESS
+#define WCNSS_DEVICE_ADDRESS "fb000000"
+#endif
+#ifndef WCNSS_DEVICE_COMPATIBLE
+#define WCNSS_DEVICE_COMPATIBLE "qcom,wcnss-wlan"
+#endif
+
+#ifndef WCNSS_SYSFS_PATH
+#define WCNSS_SYSFS_PATH "/sys/bus/platform/devices/" WCNSS_DEVICE_ADDRESS "." WCNSS_DEVICE_COMPATIBLE
+#endif
+
+#ifndef WCNSS_MAC_ADDRESS_FILE
+#define WCNSS_MAC_ADDRESS_FILE WCNSS_SYSFS_PATH "/wcnss_mac_addr"
+#endif
 
 #define MAC_OUI_LENGTH    3
 #define MAC_CUSTOM_LENGTH 3
