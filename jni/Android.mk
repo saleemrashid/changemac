@@ -2,6 +2,8 @@ LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 
+LOCAL_CFLAGS += -Wall -Wextra -Werror
+
 LOCAL_MODULE := changemac
 LOCAL_LDLIBS := -llog
 

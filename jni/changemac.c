@@ -1,8 +1,11 @@
 #include <android/log.h>
 #include <errno.h>
+#include <inttypes.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 
 #define LOG_TAG "changemac"
 
@@ -44,22 +47,18 @@ static const uint8_t VENDORS[][MAC_OUI_LENGTH] = {
 
 #define VENDORS_COUNT (sizeof(VENDORS) / sizeof(*VENDORS))
 
-static bool random_buffer(FILE *stream, void *buffer, size_t size);
-static bool random_uniform(FILE *stream, uintmax_t n, uintmax_t *out);
-static const uint8_t *random_vendor(FILE *stream);
+static bool random_buffer(void *buffer, size_t size);
+static uint32_t random_uniform(uint32_t n);
+static const uint8_t *random_vendor(void);
 
 int main(int argc, char **argv) {
-    FILE *urandom = fopen("/dev/urandom", "r");
-    if (urandom == NULL) {
-	/* This should never happen, probably due to SELinux */
-	ALOGE("Could not open /dev/urandom: %d", errno);
-	return 1;
-    }
+    (void) argc;
+    (void) argv;
 
-    const uint8_t *vendor = random_vendor(urandom);
+    const uint8_t *vendor = random_vendor();
 
     uint8_t custom[MAC_CUSTOM_LENGTH];
-    random_buffer(urandom, custom, sizeof(custom));
+    random_buffer(custom, sizeof(custom));
 
     char mac_address[3 * (MAC_OUI_LENGTH + MAC_CUSTOM_LENGTH)];
     snprintf(mac_address, sizeof(mac_address), "%02x:%02x:%02x:%02x:%02x:%02x",
@@ -93,31 +92,41 @@ int main(int argc, char **argv) {
     return 0;
 }
 
-bool random_buffer(FILE *stream, void *buffer, size_t size) {
-    return (fread(buffer, 1, size, stream) == size);
+bool random_buffer(void *buffer, size_t size) {
+    static FILE *urandom = NULL;
+    if (urandom == NULL) {
+	urandom = fopen("/dev/urandom", "r");
+
+	if (urandom == NULL) {
+	    /* This should never happen, probably due to SELinux */
+	    ALOGE("Could not open /dev/urandom: %d", errno);
+	    return false;
+	}
+    }
+
+    return (fread(buffer, size, 1, urandom) == 1);
 }
 
-bool random_uniform(FILE *stream, uintmax_t n, uintmax_t *out) {
-    uintmax_t x, max = UINTMAX_MAX - (UINTMAX_MAX % n);
+uint32_t random_uniform(uint32_t n) {
+    uint32_t max = UINT32_MAX - (UINT32_MAX % n);
 
+    uint32_t x;
     do {
-	if (!random_buffer(stream, &x, sizeof(x))) {
-	    return false;
+	if (!random_buffer(&x, sizeof(x))) {
+	    ALOGE("Could not read random bytes from stream: %d", errno);
+
+	    /* Ignore the error to avoid leaking the MAC address */
+	    srand(time(NULL));
+	    return rand() % n;
 	}
     } while (x >= max);
 
-    *out = (x / (max / n));
-    return true;
+    return (x / (max / n));
 }
 
-const uint8_t *random_vendor(FILE *stream) {
-    uintmax_t x = 0;
+const uint8_t *random_vendor(void) {
+    uint32_t x = random_uniform(VENDORS_COUNT);
 
-    if (!random_uniform(stream, VENDORS_COUNT, &x)) {
-	/* Ignore the error to avoid leaking the MAC address */
-	ALOGE("Could not read random bytes from stream: %d", errno);;
-    }
-
-    ALOGI("Selected vendor index: %ju\n", x);
+    ALOGI("Selected vendor index: %" PRIu32 "\n", x);
     return VENDORS[x];
 }
